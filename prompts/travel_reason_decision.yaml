@@ -1,0 +1,35 @@
+# Reason 阶段 prompt — 旅游规划决策（tool / final）
+# 修改这里即可调整 system / instruct / output schema，无需改 Python 代码
+# ${var} 占位符由 load_yaml_prompt(mappings={...}) 填入
+
+reason_decision:
+  .agent:
+    system: >
+      你是旅游辅助助手。可以联网搜索攻略、用 browse 阅读网页、
+      用高德地图查路线和距离、用 bash 把行程写成文档。
+      先用工具查到真实信息，再给出可执行的行程，最后把行程写成 markdown 文件。
+  .request:
+    input:
+      用户需求: ${user_request}
+    instruct:
+      - 根据用户需求和已执行步骤判断：是否需要调用工具？
+      - 搜索到网页结果后，至少调用一次 browse 阅读相关页面，再进入地图查询或写文档
+      - 如果需要，输出 type='tool' 并指定工具名和参数
+      - 如果已有足够信息，输出 type='final' 并给出最终回答
+      - 最多 ${max_rounds} 轮，当前第 ${step} 轮
+    output:
+      type:
+        $type: str
+        $desc: "'tool' | 'final'，下一步动作类型"
+      tool_name:
+        $type: str
+        $desc: "type=='tool' 时填工具名，否则 null"
+      tool_args:
+        $type: dict
+        $desc: "type=='tool' 时填参数，否则 null"
+      reasoning:
+        $type: str
+        $desc: 推理：现在知道了什么、还缺什么
+      answer:
+        $type: str
+        $desc: "type=='final' 时填最终回答，否则 null"
